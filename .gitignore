@@ -1,0 +1,22 @@
+# Environments and secrets
+.env
+.venv/
+
+# Runtime state
+data/state.json
+
+# Python artifacts
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+
+# Editors/OS
+.idea/
+.vscode/
+.DS_Store
+
+# Builds
+dist/
+build/
+
