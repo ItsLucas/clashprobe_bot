@@ -76,7 +76,6 @@ def build_application(cfg: Config) -> Application:
 
         ref = MessageRef(chat_id=sent.chat_id, message_id=sent.message_id)
         save_message_ref(ref)
-        context.application.chat_data["status_msg_ref"] = ref
         await update.effective_message.reply_text("Status message initialized and saved.")
 
     app.add_handler(CommandHandler("init_status", init_status))
