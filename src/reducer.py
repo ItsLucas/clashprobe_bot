@@ -123,7 +123,10 @@ def format_markdown_v2(
 
         name = escape_markdown(ns.name, version=2)
         tail: str
-        proto = f" ({escape_markdown(ns.protocol, version=2)})" if (show_protocol and ns.protocol) else ""
+        # Wrap protocol in escaped parentheses for MarkdownV2 safety
+        proto = (
+            f" \\({escape_markdown(ns.protocol, version=2)}\\)" if (show_protocol and ns.protocol) else ""
+        )
         if ns.up:
             if ns.latency_ms is not None:
                 tail = f" — {ns.latency_ms} ms"
@@ -131,7 +134,8 @@ def format_markdown_v2(
                 tail = ""
         else:
             if ns.reason:
-                tail = f" — {escape_markdown(ns.reason, version=2)}"
+                # Build raw; escape once at final join
+                tail = f" — {ns.reason}"
             else:
                 tail = ""
 
