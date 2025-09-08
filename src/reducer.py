@@ -156,3 +156,73 @@ def format_markdown_v2(
 
 def payload_hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _format_cn_datetime(now: datetime) -> str:
+    """Return Chinese-style datetime like 2025/9/2 上午12:59:05 (local-time-like in UTC)."""
+    # Use UTC provided in callers; adapt to 12h with CN markers.
+    y = now.year
+    m = now.month
+    d = now.day
+    hour24 = now.hour
+    minute = now.minute
+    second = now.second
+    am = hour24 < 12
+    # 12-hour clock: 0 -> 12 AM, 13 -> 1 PM
+    hour12 = hour24 % 12
+    if hour12 == 0:
+        hour12 = 12
+    meridian = "上午" if am else "下午"
+    return f"{y}/{m}/{d} {meridian}{hour12:02d}:{minute:02d}:{second:02d}"
+
+
+def format_board_zh(
+    *,
+    now: datetime,
+    domestic_alerts: list[str],
+    foreign_alerts: list[str],
+) -> str:
+    """Chinese board layout in MarkdownV2 with escaping.
+
+    Example:
+    监视公告牌
+    更新日期：2025/9/2 上午12:59:05
+
+    国内当前报警节点如下：
+    ❌ Azure-SG
+    ...
+
+    国外当前报警节点如下：
+    无
+    如何解读：只要国内国外其中有一个报警即为节点不可用
+    """
+    lines: list[str] = []
+    title = escape_markdown("监视公告牌", version=2)
+    lines.append(title)
+    cn_dt = _format_cn_datetime(now)
+    lines.append(escape_markdown(f"更新日期：{cn_dt}", version=2))
+
+    # Domestic section
+    lines.append("")
+    lines.append(escape_markdown("国内当前报警节点如下：", version=2))
+    if domestic_alerts:
+        for n in sorted(domestic_alerts, key=lambda s: s.lower()):
+            name = escape_markdown(n, version=2)
+            lines.append(f"❌ {name}")
+    else:
+        lines.append(escape_markdown("无", version=2))
+
+    # Foreign section
+    lines.append("")
+    lines.append(escape_markdown("国外当前报警节点如下：", version=2))
+    if foreign_alerts:
+        for n in sorted(foreign_alerts, key=lambda s: s.lower()):
+            name = escape_markdown(n, version=2)
+            lines.append(f"❌ {name}")
+    else:
+        lines.append(escape_markdown("无", version=2))
+
+    # Interpretation note
+    lines.append(escape_markdown("如何解读：只要国内国外其中有一个报警即为节点不可用", version=2))
+
+    return "\n".join(lines)

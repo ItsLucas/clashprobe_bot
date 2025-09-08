@@ -22,6 +22,12 @@ class Config:
 
     status_title: str = "Network Status"
     show_protocol: bool = True
+    status_template: str = "default"  # "default" or "board_zh"
+
+    # Optional probe node tag values for domestic/foreign vantage points
+    domestic_probe_node: Optional[str] = None
+    foreign_probe_node: Optional[str] = None
+    include_degraded_as_alert: bool = True
 
 
 def _to_bool(val: Optional[str], default: bool) -> bool:
@@ -93,6 +99,13 @@ def load_config() -> Config:
 
     status_title = os.getenv("STATUS_TITLE", "Network Status")
     show_protocol = _to_bool(os.getenv("SHOW_PROTOCOL"), True)
+    status_template = os.getenv("STATUS_TEMPLATE", "default").strip().lower() or "default"
+    if status_template not in {"default", "board_zh"}:
+        raise ValueError("Invalid STATUS_TEMPLATE; use 'default' or 'board_zh'")
+
+    domestic_probe_node = os.getenv("DOMESTIC_PROBE_NODE") or None
+    foreign_probe_node = os.getenv("FOREIGN_PROBE_NODE") or None
+    include_degraded_as_alert = _to_bool(os.getenv("INCLUDE_DEGRADED_AS_ALERT"), True)
 
     if missing:
         raise RuntimeError(
@@ -112,4 +125,8 @@ def load_config() -> Config:
         telegram_message_id=telegram_message_id,
         status_title=status_title,
         show_protocol=show_protocol,
+        status_template=status_template,
+        domestic_probe_node=domestic_probe_node,
+        foreign_probe_node=foreign_probe_node,
+        include_degraded_as_alert=include_degraded_as_alert,
     )

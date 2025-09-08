@@ -92,6 +92,11 @@ On first run without `TELEGRAM_MESSAGE_ID`, use `/init_status` in your target gr
   - Run `/init_status` in the group and the bot will persist IDs to `data/state.json`
 - `STATUS_TITLE` (default `Network Status`)
 - `SHOW_PROTOCOL` (true/false)
+- `STATUS_TEMPLATE` (optional): `default` (compact list) or `board_zh` (Chinese board)
+  - When `board_zh` is selected, you can scope queries per probe node (Influx tag `node`) to present domestic/foreign alert lists:
+    - `DOMESTIC_PROBE_NODE` (e.g., `region-sh-node-aliyun`)
+    - `FOREIGN_PROBE_NODE` (optional, another vantage outside CN)
+    - `INCLUDE_DEGRADED_AS_ALERT` (default `true`): if `true`, nodes with high latency are treated as alerts
 
 ## Usage
 
@@ -100,13 +105,30 @@ On first run without `TELEGRAM_MESSAGE_ID`, use `/init_status` in your target gr
 
 ### Example Output
 
+Default template:
+
 ```
 *Network Status (last 5m)*
 
-✅ [SS][IPLC][SHCU-HK] Azure (Shadowsocks) — 82 ms
-❌ MyNode-2 — no recent heartbeat
+✅ NodeA — 82 ms
+❌ NodeB — no recent heartbeat
 
 _Updated: 2025-09-07 16:15:03Z_
+```
+
+Chinese board (`STATUS_TEMPLATE=board_zh`) with per-vantage alerting lists:
+
+```
+监视公告牌
+更新日期：2025/9/2 上午12:59:05
+
+国内当前报警节点如下：
+❌ Azure-SG
+❌ RivenCloud-v2
+
+国外当前报警节点如下：
+无
+如何解读：只要国内国外其中有一个报警即为节点不可用
 ```
 
 ## Development

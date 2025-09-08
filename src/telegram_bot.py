@@ -18,7 +18,12 @@ from telegram.ext import (
 
 from .config import Config
 from .influx import fetch_probe_window
-from .reducer import format_markdown_v2, payload_hash, reduce_status
+from .reducer import (
+    format_markdown_v2,
+    payload_hash,
+    reduce_status,
+    format_board_zh,
+)
 from .state import MessageRef, load_message_ref, save_message_ref
 
 
@@ -85,26 +90,69 @@ async def update_cycle(
     """One cycle: fetch → reduce → format → edit if changed."""
     now = datetime.now(timezone.utc)
     try:
-        # fetch
-        data = fetch_probe_window(
-            url=cfg.influx_url,
-            token=cfg.influx_token,
-            org=cfg.influx_org,
-            bucket=cfg.influx_bucket,
-            minutes=cfg.time_range_minutes,
-        )
-        # reduce
-        statuses = reduce_status(
-            data, minutes=cfg.time_range_minutes, latency_warn_ms=cfg.latency_warn_ms
-        )
-        # format
-        text = format_markdown_v2(
-            cfg.status_title,
-            statuses,
-            minutes=cfg.time_range_minutes,
-            show_protocol=cfg.show_protocol,
-            now=now,
-        )
+        if cfg.status_template == "board_zh":
+            # Domestic vantage
+            dom_data = fetch_probe_window(
+                url=cfg.influx_url,
+                token=cfg.influx_token,
+                org=cfg.influx_org,
+                bucket=cfg.influx_bucket,
+                minutes=cfg.time_range_minutes,
+                probe_node=cfg.domestic_probe_node,
+            )
+            dom_status = reduce_status(
+                dom_data,
+                minutes=cfg.time_range_minutes,
+                latency_warn_ms=cfg.latency_warn_ms,
+            )
+            # Foreign vantage (optional)
+            if cfg.foreign_probe_node:
+                for_data = fetch_probe_window(
+                    url=cfg.influx_url,
+                    token=cfg.influx_token,
+                    org=cfg.influx_org,
+                    bucket=cfg.influx_bucket,
+                    minutes=cfg.time_range_minutes,
+                    probe_node=cfg.foreign_probe_node,
+                )
+                for_status = reduce_status(
+                    for_data,
+                    minutes=cfg.time_range_minutes,
+                    latency_warn_ms=cfg.latency_warn_ms,
+                )
+            else:
+                for_status = {}
+
+            def is_alert(ns) -> bool:
+                return (not ns.up) or (cfg.include_degraded_as_alert and ns.degraded)
+
+            domestic_alerts = [s.name for s in dom_status.values() if is_alert(s)]
+            foreign_alerts = [s.name for s in for_status.values() if is_alert(s)]
+
+            text = format_board_zh(
+                now=now,
+                domestic_alerts=domestic_alerts,
+                foreign_alerts=foreign_alerts,
+            )
+        else:
+            # Default compact list
+            data = fetch_probe_window(
+                url=cfg.influx_url,
+                token=cfg.influx_token,
+                org=cfg.influx_org,
+                bucket=cfg.influx_bucket,
+                minutes=cfg.time_range_minutes,
+            )
+            statuses = reduce_status(
+                data, minutes=cfg.time_range_minutes, latency_warn_ms=cfg.latency_warn_ms
+            )
+            text = format_markdown_v2(
+                cfg.status_title,
+                statuses,
+                minutes=cfg.time_range_minutes,
+                show_protocol=cfg.show_protocol,
+                now=now,
+            )
         h = payload_hash(text)
 
         # Determine message ref precedence: explicit in env, else persisted

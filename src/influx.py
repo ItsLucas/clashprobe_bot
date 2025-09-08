@@ -32,6 +32,7 @@ def fetch_probe_window(
     org: str,
     bucket: str,
     minutes: int,
+    probe_node: Optional[str] = None,
 ) -> Dict[str, NodePoint]:
     """
     Query InfluxDB for the last N minutes of probe data and reduce by `name`.
@@ -39,10 +40,15 @@ def fetch_probe_window(
     Returns a mapping: name -> NodePoint (latest alive/delay_ms and their timestamps).
     """
 
+    node_filter = (
+        f'  |> filter(fn: (r) => r["node"] == "{probe_node}")\n' if probe_node else ""
+    )
+
     flux = f"""
 from(bucket: "{bucket}")
   |> range(start: -{minutes}m)
   |> filter(fn: (r) => r["_measurement"] == "probe")
+{node_filter}
   |> filter(fn: (r) =>
     r["_field"] == "alive" or r["_field"] == "delay_ms"
   )
