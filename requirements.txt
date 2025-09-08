@@ -1,3 +1,6 @@
 influxdb-client==1.45.0
 python-telegram-bot[job-queue]==21.4
 python-dotenv==1.0.1
+# Dev/test tools
+pytest==8.3.3
+flake8==7.1.1

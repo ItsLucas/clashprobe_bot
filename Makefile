@@ -10,7 +10,7 @@ help:
 init:
 	$(PY) -m venv $(VENV)
 	. $(VENV)/bin/activate && pip install --upgrade pip
-	. $(VENV)/bin/activate && pip install -r requirements-dev.txt
+	. $(VENV)/bin/activate && pip install -r requirements.txt
 
 .PHONY: dev
 dev:
