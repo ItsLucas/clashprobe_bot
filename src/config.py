@@ -73,7 +73,9 @@ def load_config() -> Config:
         except Exception:
             raise ValueError(f"Invalid integer for LATENCY_WARN_MS: {latency_warn_raw}")
 
-    telegram_bot_token = os.getenv("TELEGRAM_BOT_TOKEN") or ""
+    telegram_bot_token = os.getenv(
+        "TELEGRAM_BOT_TOKEN"
+    ) or ""
     if not telegram_bot_token:
         missing.append("TELEGRAM_BOT_TOKEN")
 
@@ -111,4 +113,3 @@ def load_config() -> Config:
         status_title=status_title,
         show_protocol=show_protocol,
     )
-

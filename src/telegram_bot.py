@@ -8,8 +8,13 @@ from typing import Optional
 
 from telegram import Message, Update
 from telegram.constants import ParseMode
-from telegram.ext import (Application, CallbackContext, CommandHandler,
-                          ContextTypes)
+from telegram.ext import (
+    Application,
+    CallbackContext,
+    CommandHandler,
+    ContextTypes,
+    Defaults,
+)
 
 from .config import Config
 from .influx import fetch_probe_window
@@ -30,12 +35,14 @@ def build_application(cfg: Config) -> Application:
     app = (
         Application.builder()
         .token(cfg.telegram_bot_token)
-        .parse_mode(ParseMode.MARKDOWN_V2)
+        .defaults(Defaults(parse_mode=ParseMode.MARKDOWN_V2))
         .build()
     )
 
     # /init_status handler
-    async def init_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def init_status(
+        update: Update, context: ContextTypes.DEFAULT_TYPE
+    ) -> None:
         if update.effective_chat is None or update.effective_user is None:
             return
 
@@ -72,7 +79,9 @@ def build_application(cfg: Config) -> Application:
     return app
 
 
-async def update_cycle(cfg: Config, state: BotState, context: CallbackContext) -> None:
+async def update_cycle(
+    cfg: Config, state: BotState, context: CallbackContext
+) -> None:
     """One cycle: fetch → reduce → format → edit if changed."""
     now = datetime.now(timezone.utc)
     try:
@@ -85,7 +94,9 @@ async def update_cycle(cfg: Config, state: BotState, context: CallbackContext) -
             minutes=cfg.time_range_minutes,
         )
         # reduce
-        statuses = reduce_status(data, minutes=cfg.time_range_minutes, latency_warn_ms=cfg.latency_warn_ms)
+        statuses = reduce_status(
+            data, minutes=cfg.time_range_minutes, latency_warn_ms=cfg.latency_warn_ms
+        )
         # format
         text = format_markdown_v2(
             cfg.status_title,
@@ -99,7 +110,9 @@ async def update_cycle(cfg: Config, state: BotState, context: CallbackContext) -
         # Determine message ref precedence: explicit in env, else persisted
         ref = state.msg_ref
         if cfg.telegram_chat_id and cfg.telegram_message_id:
-            ref = MessageRef(chat_id=cfg.telegram_chat_id, message_id=cfg.telegram_message_id)
+            ref = MessageRef(
+                chat_id=cfg.telegram_chat_id, message_id=cfg.telegram_message_id
+            )
 
         if ref is None:
             # Try load from disk (in case not loaded yet)
@@ -107,7 +120,10 @@ async def update_cycle(cfg: Config, state: BotState, context: CallbackContext) -
             state.msg_ref = ref
 
         if ref is None:
-            logger.info("No target message configured. Run /init_status in your group or set TELEGRAM_CHAT_ID + TELEGRAM_MESSAGE_ID.")
+            logger.info(
+                "No target message configured. Run /init_status in your group or set "
+                "TELEGRAM_CHAT_ID + TELEGRAM_MESSAGE_ID."
+            )
             return
 
         # Avoid redundant edits
@@ -138,4 +154,3 @@ async def update_cycle(cfg: Config, state: BotState, context: CallbackContext) -
 
     except Exception as e:
         logger.error("Update cycle error: %s", e)
-

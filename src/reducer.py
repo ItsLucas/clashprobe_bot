@@ -4,7 +4,7 @@ import hashlib
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 from telegram.helpers import escape_markdown
 
@@ -41,7 +41,12 @@ def reduce_status(
         has_any = (node.alive_time is not None) or (node.latency_time is not None)
         if not has_any:
             out[name] = NodeStatus(
-                name=name, up=False, degraded=False, latency_ms=None, reason="no recent heartbeat", protocol=node.protocol
+                name=name,
+                up=False,
+                degraded=False,
+                latency_ms=None,
+                reason="no recent heartbeat",
+                protocol=node.protocol,
             )
             continue
 
@@ -62,7 +67,12 @@ def reduce_status(
             # alive False or missing alive -> DOWN
             reason = "no recent heartbeat" if alive is None else None
             out[name] = NodeStatus(
-                name=name, up=False, degraded=False, latency_ms=None, reason=reason, protocol=node.protocol
+                name=name,
+                up=False,
+                degraded=False,
+                latency_ms=None,
+                reason=reason,
+                protocol=node.protocol,
             )
 
     return out
@@ -142,4 +152,3 @@ def format_markdown_v2(
 
 def payload_hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
-

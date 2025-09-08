@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional
 
 from influxdb_client import InfluxDBClient
 
@@ -39,13 +39,15 @@ def fetch_probe_window(
     Returns a mapping: name -> NodePoint (latest alive/delay_ms and their timestamps).
     """
 
-    flux = f'''
+    flux = f"""
 from(bucket: "{bucket}")
   |> range(start: -{minutes}m)
   |> filter(fn: (r) => r["_measurement"] == "probe")
-  |> filter(fn: (r) => r["_field"] == "alive" or r["_field"] == "delay_ms")
-  |> keep(columns: ["_time", "_value", "_field", "name", "protocol"]) 
-'''
+  |> filter(fn: (r) =>
+    r["_field"] == "alive" or r["_field"] == "delay_ms"
+  )
+  |> keep(columns: ["_time", "_value", "_field", "name", "protocol"])
+"""
 
     result: Dict[str, NodePoint] = {}
     now = datetime.now(timezone.utc)
@@ -100,4 +102,3 @@ from(bucket: "{bucket}")
         now.isoformat(),
     )
     return result
-
