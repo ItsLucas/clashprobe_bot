@@ -20,10 +20,7 @@ Failure handling and retries:
 
 from __future__ import annotations
 
-import asyncio
 import logging
-import signal
-from typing import Optional
 
 from telegram.ext import Application
 
@@ -39,7 +36,7 @@ def setup_logging() -> None:
     )
 
 
-async def main_async() -> None:
+def main() -> None:
     setup_logging()
     cfg = load_config()
 
@@ -52,14 +49,16 @@ async def main_async() -> None:
     async def job_callback(context):
         await update_cycle(cfg, state, context)
 
-    app.job_queue.run_repeating(job_callback, interval=cfg.poll_interval_seconds, first=0)
+    if app.job_queue is None:  # pragma: no cover - runtime check
+        raise RuntimeError(
+            "JobQueue missing. Install python-telegram-bot[job-queue] to enable scheduling."
+        )
+    app.job_queue.run_repeating(
+        job_callback, interval=cfg.poll_interval_seconds, first=0
+    )
 
-    # Run polling with graceful shutdown
-    await app.run_polling(close_loop=False)
-
-
-def main() -> None:
-    asyncio.run(main_async())
+    # Run polling
+    app.run_polling()
 
 
 if __name__ == "__main__":

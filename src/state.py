@@ -47,4 +47,3 @@ def load_message_ref() -> Optional[MessageRef]:
     except Exception as e:
         logger.warning("No valid state found at %s: %s", STATE_FILE, e)
         return None
-

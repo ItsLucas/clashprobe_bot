@@ -2,7 +2,7 @@
 
 A small, ready-to-run bot that reads probe metrics from InfluxDB 2.0 and keeps a Telegram message updated as a compact, live status page.
 
-- Stack: Python 3.11+, `influxdb-client`, `python-telegram-bot` v21
+- Stack: Python 3.11+, `influxdb-client`, `python-telegram-bot[job-queue]` v21
 - Loop: query → reduce → format → edit message
 - Two ways to target the message: explicit IDs via env, or bootstrap with `/init_status` which stores IDs in `data/state.json`.
 
